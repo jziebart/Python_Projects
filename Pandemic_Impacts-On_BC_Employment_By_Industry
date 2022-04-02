@@ -1,0 +1,33 @@
+import pandas as pd
+import altair as alt
+
+#1.import xls
+#2.set row with years as header
+#3.extract columns 0, '2019', and '2020'
+#4.rename columns
+#5.extract specific rows 
+bc_employment_changes = pd.read_excel('BC_Employment_2019-2020_Changes.xls', sheet_name='BC', header=2, usecols=[0,49,51]).rename(columns ={'Note: figures of less than 1.5 (1,500 persons) suppressed':'Industry_Type',
+                                        '2019':'2019 Employment', '2020':'2020 Employment'})
+subsector_drill_down = bc_employment_changes.loc[[4,6,7,8,9,10,12,14,15,16,17,19,20,21,22,23,24,25,26,27,28,29,34,35,37,38,39,40,41,42,44,
+                                                  45,46,47,49,50,51,52,53,55,56,58,59,61,62,63,64,66,67,69,70,72,73,74,75,
+                                                  77,78,79]]
+
+#7.Create "employment_delta" column to show job losses and gains between 2019 and 2020.
+employment_delta = subsector_drill_down.assign(Thousands_of_Jobs = (-1*(subsector_drill_down['2019 Employment'] - subsector_drill_down['2020 Employment'])))
+
+#8.Create "Percentage_Change" Column
+#9.Reduce "Percentage_Change" to two decimal place (no rounding)***
+difference = employment_delta.assign(Percentage_Change = (100 * (Employment_Delta['Thousands_of_Jobs'] / Employment_Delta['2019 Employment'])))
+difference.to_csv(r'C:\Users\justi\Dropbox\CompSci_Projects\BC_Jobs_2019-2020_Changes\Delta_2019_2020.csv', index = False)
+#Difference.round(Percentage_Difference,2)
+
+#10. Sort columns in a descending order.
+sort_descending = difference.sort_values('Percentage_Change', ascending = False).drop(columns = ['2019 Employment', '2020 Employment', 'Thousands_of_Jobs'])
+sort_descending
+
+#11. Visualize 'Percentage Difference' using bar chart
+#https://altair-viz.github.io/gallery/bar_chart_sorted.html
+alt.Chart(sort_descending).mark_bar().encode(
+                x='Percentage_Change',
+                y=alt.Y('Industry_Type', sort='-x')
+               ).properties(title='Changes in BC Employment Levels by Industry Type (2019 to 2020)')
